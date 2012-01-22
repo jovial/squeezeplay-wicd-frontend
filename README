@@ -1,0 +1,10 @@
+
+What: GUI for squeezplay which interacts with wicd via dbus
+
+Why: Configure network interfaces from within squeezeplay interface. Wireless (for most simple configurations) and Wired interfaces supported.
+
+Instructions for use:
+
+copy folder SetupNetworking to share/jive/applets in you squeezeplay install folder
+compile and install 'wicdbridge' library (included) - you may need to change some paths to get
+the library files to be installed to the right place (<squeezeplay-dir>/share/jive/applets/SetupNetworking/lib)
