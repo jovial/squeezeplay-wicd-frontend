@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE node PUBLIC
+	  "-//freedesktop//DTD D-Bus Object Introspection 1.0//EN"
+	  "http://standards.freedesktop.org/dbus/1.0/introspect.dtd">
+<node name="/org/wicd/daemon">
+  <interface name="org.wicd.daemon">
+	<method name="Disconnect">
+	</method>
+	<method name="AutoConnect">
+		<arg type="b" name="RescanWireless" direction="in"/>
+	</method>
+	<method name="GetAutoReconnect">
+		<arg type="b" name="AutoReconnect" direction="out"/>
+	</method>
+	<method name="SetAutoReconnect">
+		<arg type="b" name="AutoReconnect" direction="in"/>
+	</method>
+	<!--        Keyword arguments:
+        state - An int representing the state of the connection as defined
+        in misc.py.
+
+        info - a list of strings containing data about the connection state.  
+        The contents of this list are dependent on the connection state.
+
+        state - info contents:
+        NOT_CONNECTED - info[0] = ""
+        CONNECTING - info[0] = "wired" or "wireless"
+                     info[1] = None if wired, an essid if wireless
+        WIRED - info[0] = IP Adresss
+        WIRELESS - info[0] = IP Address
+                   info[1] = essid
+                   info[2] = signal strength
+                   info[3] = internal networkid
+                   info[4] = bitrate
+        SUSPENDED - info[0] = ""
+	-->
+	<method name="SetWirelessInterface">
+		<arg type="s" name="interface" direction="in"/>
+	</method>
+	<method name="SetWiredInterface">
+		<arg type="s" name="interface" direction="in"/>
+	</method>
+	<method name="GetConnectedInterface">
+		<arg type="s" name="interface" direction="out"/>
+	</method>
+	<method name="GetConnectionStatus">
+		<!--structure containing unsigned int (state), and array of strings (info) -->
+		<arg type="(uas)" name="StateInfoStruct" direction="out"/>
+	</method>
+	<method name="SetPreferWiredNetwork">
+		<arg type="b" name="PreferWired" direction="in"/>
+	</method>
+	
+	<!-- signals start here -->
+	<signal name="StatusChanged">
+		<arg type="u" name="status" direction ="out"/>
+   		<arg type="av" name="info" direction ="out"/>
+	</signal >
+	<!-- signals end -->
+  </interface>
+  <node name="wired">
+    <interface name="org.wicd.daemon.wired">
+	<method name="ReadWiredNetworkProfile">
+		<arg type="s" name="WiredNetworkProfile" direction="in"/>
+		<arg type="s" name="ReadWiredNetworkProfileMessage"
+                direction="out">
+                </arg>
+	</method>
+	<method name="SaveWiredNetworkProfile">
+		<arg type="s" name="WiredNetworkProfile" direction="in"/>
+		<arg type="s" name="SaveWiredNetworkProfileMessage"
+                direction="out">
+                </arg>
+	</method>
+	<method name="GetWiredProfileList">
+		<arg type="as" name="WiredProfileList" direction="out">
+                </arg>
+	</method>
+		<method name="GetWiredProperty">
+		<arg type="s" name="PropertyName" direction="in"/>
+		<!-- can return false or a string -->
+		<arg type="s" name="NetworkPropertyValue" direction="out">
+                </arg>
+	</method>
+	<method name="SetWiredProperty">
+		<arg type="s" name="NetworkProperty" direction="in" />
+		<arg type="s" name="NetworkPropertyValue" direction="in" />
+		<arg type="b" name="NetworkExists" direction="out" />
+	</method>
+	<method name="CheckPluggedIn">
+		<arg type="b" name="PluggedIn" direction="out" />
+	</method>
+	<method name="DetectWiredInterface">
+		<arg type="s" name="WiredInterface" direction="out" />
+	</method>
+	<method name="ConnectWired">
+	</method>
+	<method name="CheckIfWiredConnecting">
+		<arg type="b" name="WiredConnecting" direction="out" />
+	</method>
+	<method name="CheckWiredConnectingMessage">
+		<!-- returns false if not connecting, string otherwsie -->
+		<arg type="s" name="WiredConnectingMessage" direction="out" />
+	</method>
+		<method name="EnableWiredInterface">
+		<arg type="b" name="WiredEnabled" direction="out"/>  
+	</method>
+	<method name="DisableWiredInterface">
+		<arg type="b" name="WiredDisabled" direction="out"/>  
+	</method>
+	<method name="IsWiredUp">
+		<arg type="b" name="WiredUp" direction="out"/> 
+	</method>
+	<method name="GetWiredInterfaces">
+		<arg type="as" name="WiredInterfaces" direction="out"/> 
+	</method>
+	<method name="UnsetWiredDefault">
+	</method>	
+  </interface>
+  </node>
+  <node name="wireless">
+      <interface name="org.wicd.daemon.wireless">
+	<method name="SaveWirelessNetworkProfile">
+		<arg type="i" name="Network" direction="in"/>             
+	</method>
+	<method name="GetNumberOfNetworks">
+		<arg type="i" name="NumberOfNetworks" direction="out">
+		</arg>            
+	</method>
+	<!--Scans for wireless networks, optionally using a (hidden) essid
+        set with SetHiddenNetworkESSID.-->
+	<method name="Scan">
+		<!-- Do scan synchronously(true)? - Will emit signal when done if aysnc -->
+		<arg type="b" name="Sync" direction="in"/> 
+		<arg type="b" name="ScanCompleted" direction="out">
+		</arg>           
+	</method>
+	<method name="SetHiddenNetworkESSID">
+	<arg type="s" name="Essid" direction="in"/>
+	</method>
+	<method name="GetWirelessProperty">
+		<arg type="i" name="NetworkId" direction="in"/>
+		<arg type="s" name="NetworkProperty" direction="in" />
+		<arg type="s" name="NetworkPropertyReturn" direction="out" >
+			<!-- null string if network propery not valid? -->
+		</arg>
+	</method>
+	<method name="SetWirelessProperty">
+		<arg type="i" name="NetworkId" direction="in"/>
+		<arg type="s" name="NetworkProperty" direction="in" />
+		<arg type="s" name="NetworkPropertyValue" direction="in" />
+	</method>
+	<!-- returns curretn wireless network as a astring -->
+	<method name="GetCurrentNetwork">
+		<!-- position in iwconfig ? Throws exception if invalid number -->
+		<arg type="i" name="Iwconfig" direction="in"/>
+		<!-- returns -1 if network id not found -->
+		<arg type="s" name="Network" direction="out">
+		</arg>
+	</method>
+	<!--  Returns an automatically detected wireless interface.  -->
+	<method name="DetectWirelessInterface">
+		<arg type="s" name="WirelessInterface" direction="out">
+		</arg>
+	</method>
+	<method name="GetCurrentNetworkID">
+		<!-- position in iwconfig ? Throws exception if invalid number -->
+		<arg type="i" name="Iwconfig" direction="in"/>
+		<!-- returns -1 if network id not found -->
+		<arg type="i" name="NetworkID" direction="out">
+		</arg>
+	</method>	 
+	<method name="GetWirelessIP">
+		<!-- position in iwconfig ? Throws exception if invalid number -->
+		<arg type="i" name="Ifconfig" direction="in"/>
+		<!-- returns -1 if network id not found -->
+		<arg type="s" name="Ip" direction="out">
+		<!-- Null if ip not found? -->
+	</arg>
+	</method>
+	<method name="ConnectWireless">
+		<arg type="i" name="NetworkId" direction="in"/>             
+	</method>
+	<method name="CheckIfWirelessConnecting">
+		<arg type="b" name="WirelessConnecting" direction="out"/>             
+	</method>
+	<method name="CheckWirelessConnectingMessage">
+		<!-- should return "done" when completed" -->
+		<arg type="s" name="WirelessConnectingMessage" direction="out"/>             
+	</method>
+	<method name="EnableWirelessInterface">
+		<arg type="b" name="WirelessEnabled" direction="out"/>  
+	</method>
+	<method name="DisableWirelessInterface">
+		<arg type="b" name="WirelessDisabled" direction="out"/>  
+	</method>
+	<method name="IsWirelessUp">
+		<arg type="b" name="Wirelessup" direction="out"/> 
+	</method>
+		<method name="GetWirelessInterfaces">
+		<arg type="as" name="WirelesInterfaces" direction="out"/> 
+	</method>
+<!-- end interface: wireless -->	
+ </interface>
+ <!-- end node: wireless -->
+  </node>
+</node>
+

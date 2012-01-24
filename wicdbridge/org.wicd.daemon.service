@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.wicd.daemon
+Exec=/etc/init.d/wicd start
+User=root

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE node PUBLIC
+	  "-//freedesktop//DTD D-Bus Object Introspection 1.0//EN"
+	  "http://standards.freedesktop.org/dbus/1.0/introspect.dtd">
+<node name="/org/wicd/daemon">
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg direction="out" type="s" />
+    </method>
+  </interface>
+  <interface name="org.wicd.daemon">
+	<method name="Disconnect">
+	</method>
+  </interface>
+  <node name="wired"/>
+  <node name="wireless"/>
+</node>
+<node name="/org/wicd/daemon/wired">
+  <interface name="org.wicd.daemon.wired">
+	<method name="ReadWiredNetworkProfile">
+		<arg type="s" name="WiredNetworkProfile" direction="in"/>
+		<arg type="s" name="ReadWiredNetworkProfileMessage"
+                direction="out"/>
+		<arg type="b" name="ReadWiredNetworkProfileStatus" direction="out"/>
+	</method>
+	<method name="SaveWiredNetworkProfile">
+		<arg type="s" name="WiredNetworkProfile" direction="in"/>
+		<arg type="s" name="ReadWiredNetworkProfileMessage"
+                direction="out"/>
+		<arg type="b" name="ReadWiredNetworkProfileStatus" direction="out"/>                
+	</method>        
+  </interface>
+</node>
+<node name="/org/wicd/daemon/wireless">
+  <interface name="org.wicd.daemon.wireless">
+        
+  </interface>
+</node>
