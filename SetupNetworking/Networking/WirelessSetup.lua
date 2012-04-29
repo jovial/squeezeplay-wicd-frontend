@@ -33,13 +33,13 @@ local Group			= require("jive.ui.Group")
 local ContextMenuWindow      = require("jive.ui.ContextMenuWindow")
 local Textinput              = require("jive.ui.Textinput")
 local log		= require("jive.utils.log").logger("squeezeplay.applets.SetupNetworking")
+local coroutine        = require("coroutine")
 
 local appletManager = appletManager
 local jiveMain      = jiveMain
 
 local EVENT_WINDOW_POP  = jive.ui.EVENT_WINDOW_POP
 local EVENT_CONSUME  = jive.ui.EVENT_CONSUME
-
 
 
 --used to redraw window everytime its shown
@@ -53,9 +53,14 @@ local Networking = {}
 Networking.Utilities = require("Networking.Utilities")
 Networking.Option = require("Networking.Option")
 Networking.ConnectingPopup = require("Networking.ConnectingPopup")
+Networking.EncryptionSelect = require("Networking.WirelessEncryptionOptions")
 --SettingsManager = require("Networking.SettingsManager")
 
+Networking.WirelessEncryption = require("Networking.WirelessEncryption")
 
+-- including registers the encryption type (or should)
+Networking.WPAEncryption = require("Networking.WPAEncryption")
+Networking.WEPPassphrase = require("Networking.WEPPassphraseEncryption")
 
 local WirelessSetup = oo.class()
 
@@ -70,12 +75,25 @@ function WirelessSetup:__init(parent, bssid, device, callback)
   obj.device = device
   
   device:setBssid(bssid)
-  
-  
-  
-  
+
+  WirelessSetup.initEncryptionSelect(obj)
+
+    
   return obj
   
+end
+
+function WirelessSetup:initEncryptionSelect()
+
+  local function callback()
+    self:redraw()
+  end
+  self.encryptionSelect = Networking.EncryptionSelect(self.parent, callback)
+  local currentSelection = self.encryptionSelect:getSelected()
+  if currentSelection != nil and currentSelection.real_name != nil then
+    self.encType = currentSelection.real_name
+  end
+
 end
 
 function WirelessSetup:getParent()
@@ -154,15 +172,69 @@ function WirelessSetup:createMenu()
         -- do nothing function
   end )}
   
-  menu:addItem(menuItem)	
+  menu:addItem(menuItem)
+
+  -- Wireless Encryption
+
+  optionsList = {}
+  options = {}
+
+  title = "Encryption:"
   
-  local function connect(device, key)
+  local encryptionSelect = self.encryptionSelect
+  local currentSelection = encryptionSelect:getSelected()
+  
+  if currentSelection != nil and currentSelection.real_name != nil 
+        and currentSelection.real_name != "none" then
+    options = { currentSelection.human_name }
+    self.encType = currentSelection.real_name
+  else
+    options = {"None"}
+    self.encType = nil
+  end
+  
+  local function callbackFunction(choiceObject, selectedIndex)
+    encryptionSelect:show()
+  end
+  
+  
+  local function statusFunction(self) 
+    
+    return options[1]
+    
+  end
+  
+  Networking.Option(title, options, callbackFunction, statusFunction, optionsList)
+
+  --TODO: convert to utility function
+
+  for i,j in ipairs(optionsList) do
+    
+    local menuItem = { text = j.title, style = 'item_choice', 
+      check =  Choice(
+        "choice",  -- style
+        j.options,
+        j:getCallback(),
+        j:getStatusIndex()
+        
+    )}
+        
+    menu:addItem(menuItem)
+    
+  end  
+
+
+  --end Wireless Encryption
+    	
+  
+  local function connect(device)
     
     -- probably more annoying, reckon manual is best as it gives opporunity to connect again
     --jiveMain:goHome()
     
     local connectingPopup = Networking.ConnectingPopup(self.parent,"","",45)
-    
+    local encryption = nil
+
     local function connectCallback(event, info, success, message)
       
       log:info("class: WirelessSetup, function: connect/ConnectCallback")
@@ -173,42 +245,65 @@ function WirelessSetup:createMenu()
         connectingPopup:close(success)
         
         if success then
-          device:storeEncKey()
+          -- dont need to do anything atm
         else
           -- assume all failures due to password failure, we cannot guarentee 
           -- we will get authentication failed message
-          device:removeEncKey()
+          if (encType != "none" and encryption != nil) then
+            encryption:reset()
+          end
         end
         
       end
       
       
+    end     
+    
+    function getUserInput(title,set,done, inputRequired)  
+            
+        local function connectRoutine()
+            connectingPopup:show()
+            connectTask= device:connect(connectCallback)
+        end
+
+        local function callback(value)
+            --FIXME: why is value a table and not a string?            
+            set(tostring(value))
+            if (done) then
+                connectRoutine()
+            end           
+        end
+        
+        if (inputRequired) then        
+            getInput(title,callback, "", "qwerty")
+        end        
+        
+        --case already got credentials / no encryption
+        if (done and not inputRequired) then
+            connectRoutine()
+        end        
+
     end
     
-    connectingPopup:show()
-    
-    connectTask, keyRequested = device:connect(connectCallback,key)
-    
-    
-    if (keyRequested == true) then
-      
-      connectTask:removeTask()
-      connectingPopup:terminate()
-      
-      local function reconnect(value)
-        
-        device:setEncKey(value)
-        connect(device, value)
-        
-      end
-      
-      local encryptionType = device:getEncType()
-      
-      getInput(encryptionType .. " key",reconnect, "", "qwerty")
-      
+
+    --check for encryption and get required credentials 
+
+    if (self.encType != nil) then
+        encryption = Networking.WirelessEncryption.getEncTypes()[self.encType]
     end
+
+    if (encType != "none" and encryption != nil) then 
+        encryption =  encryption.class {device = self:getDevice()}
+        --encryption:reset()
+        while (encryption:isInputRequired(getUserInput)) do
+            -- empty
+        end
+        
+    end
+
+   
     
-    
+
   end
   
   options = Networking.Utilities:getStandardConnectionOptions(device, redraw, getInput,connect)
@@ -278,7 +373,8 @@ function WirelessSetup:show()
       function(event)
         --self.parent:storeSettings()
         if (self:getCallback() != nil) then
-          self:getCallback()
+          local callback = self:getCallback()
+          callback()
         end						
         
     end)

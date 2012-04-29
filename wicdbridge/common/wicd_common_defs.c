@@ -279,7 +279,7 @@ if (!(*functionToCall) (proxy, arg, &error))
 closeProxy(proxy);
 
 //indicate one object was returned
-return 1;
+return 0;
 
 }
 
@@ -352,7 +352,7 @@ if (!(*functionToCall) (proxy, arg1, arg2, arg3, &error))
 closeProxy(proxy);
 
 //indicate one object was returned
-return 1;
+return 0;
 
 }
 

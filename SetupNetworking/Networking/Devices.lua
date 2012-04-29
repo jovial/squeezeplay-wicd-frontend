@@ -335,7 +335,7 @@ end
 
 -- return true if key required, else false
 
-function Devices.Wireless:connect(callback, key)
+function Devices.Wireless:connect(callback, validate)
   
   local function connectWrapper()
     
@@ -352,36 +352,9 @@ function Devices.Wireless:connect(callback, key)
   
   local connectTask = Task("Wireless Connect", self, function() getmetatable(self):connectRoutine(callback,info,connect,check, message) end)
   
-  local encrypted = self:getWirelessProperty(self:getBssid(),"encryption")
-  
   
   local timer = Timer(100, function()connectTask:addTask() end, true)
   
-  if (encrypted) then
-    
-    log:info("Encryption deteted, requesting key")
-    --if(type(self:getWirelessProperty(self:getBssid(),"key")) == "string") then
-    --
-    --	return connectTask, false
-    
-    --else
-    -- for now just request key everytime
-    --TODO: check if key authentication succeeds, before asking again
-    -- will involve checking messages in connect routine?
-    
-    if (key == nil and self:getManualSettings().psk == nil) then
-      
-      return connectTask, true
-    elseif (self:getManualSettings().psk != nil) then
-      
-      --self:setEncKey(self:getManualSettings().key)
-      self:setPsk(self:getManualSettings().psk)
-      
-    end
-    --end
-    
-    
-  end
   
   -- if device is currently unselected, select it now so that we connect using the correct interface
   
@@ -463,7 +436,7 @@ function Devices.Networking:connectRoutine(callback, info, connect, check, messa
     status, connectInfo = wicd.daemon.GetConnectionStatus()
     
     --maybe check wired/wireless 
-    print(status)
+    --print(status)
     if (status != 0) and (status !=1) then
       success = true
     end
@@ -579,11 +552,12 @@ end
 function Devices.Wireless:setWirelessProperty(bssid,property,value)
   
   local networkID = self:getNetworkID(bssid)
-  
+  log:info(networkID)
   if (networkID == nil) then
     return
   end
-  
+  log:info(property)
+  log:info(value)
   wicd.daemon.wireless.SetWirelessProperty(networkID,property,value)
   
 end
@@ -918,6 +892,31 @@ function Devices.Wireless:getPsk(psk)
   
   return self:getWirelessProperty(self:getBssid(),"psk")
   
+end
+
+function Devices.Wireless:setWirelessNetworkProperty(property, value)
+  --log:info("setting Wireless property: " .. property .. " -> " .. value)
+  log:info(property)
+  log:info(value)
+  log:info(self:getBssid())
+  self:setWirelessProperty(self:getBssid(), property, value)
+  
+end
+
+function Devices.Wireless:getWirelessNetworkProperty(property)
+    return self:getWirelessProperty(self:getBssid(), property)
+end
+
+function Devices.Wireless.isEncrypted() 
+    local encrypted = self:getWirelessProperty(self:getBssid(),"encryption")
+    if (encrypted) then
+        return true
+
+    else
+        return false
+    end
+        
+
 end
 
 

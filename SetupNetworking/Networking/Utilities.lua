@@ -22,6 +22,7 @@ local ipairs, pairs, print, type, setmetatable, lua_table, _G, _assert, getmetat
 
 local oo               = require("loop.simple")
 local Font                   = require("jive.ui.Font")
+local log		= require("jive.utils.log").logger("squeezeplay.applets.SetupNetworking")
 local jive = jive
 
 

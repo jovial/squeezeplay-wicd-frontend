@@ -1,4 +1,23 @@
 
+    --[[
+    A frontend to wicd for squeezeplay
+    Copyright (C) 2011  Will Szumski
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    --]]
+
+
 local ipairs, pairs, print, type, setmetatable, lua_table, _G, _assert, getmetatable, require = ipairs, pairs, print, type, setmetatable, table, _G , assert,  getmetatable, require
 
 local log		= require("jive.utils.log").logger("squeezeplay.applets.SetupNetworking")
@@ -316,7 +335,7 @@ end
 
 -- return true if key required, else false
 
-function Devices.Wireless:connect(callback, key)
+function Devices.Wireless:connect(callback, validate)
   
   local function connectWrapper()
     
@@ -333,36 +352,9 @@ function Devices.Wireless:connect(callback, key)
   
   local connectTask = Task("Wireless Connect", self, function() getmetatable(self):connectRoutine(callback,info,connect,check, message) end)
   
-  local encrypted = self:getWirelessProperty(self:getBssid(),"encryption")
-  
   
   local timer = Timer(100, function()connectTask:addTask() end, true)
   
-  if (encrypted) then
-    
-    log:info("Encryption deteted, requesting key")
-    --if(type(self:getWirelessProperty(self:getBssid(),"key")) == "string") then
-    --
-    --	return connectTask, false
-    
-    --else
-    -- for now just request key everytime
-    --TODO: check if key authentication succeeds, before asking again
-    -- will involve checking messages in connect routine?
-    
-    if (key == nil and self:getManualSettings().psk == nil) then
-      
-      return connectTask, true
-    elseif (self:getManualSettings().psk != nil) then
-      
-      --self:setEncKey(self:getManualSettings().key)
-      self:setPsk(self:getManualSettings().psk)
-      
-    end
-    --end
-    
-    
-  end
   
   -- if device is currently unselected, select it now so that we connect using the correct interface
   
@@ -560,11 +552,12 @@ end
 function Devices.Wireless:setWirelessProperty(bssid,property,value)
   
   local networkID = self:getNetworkID(bssid)
-  
+  log:info(networkID)
   if (networkID == nil) then
     return
   end
-  
+  log:info(property)
+  log:info(value)
   wicd.daemon.wireless.SetWirelessProperty(networkID,property,value)
   
 end
@@ -899,6 +892,31 @@ function Devices.Wireless:getPsk(psk)
   
   return self:getWirelessProperty(self:getBssid(),"psk")
   
+end
+
+function Devices.Wireless:setWirelessNetworkProperty(property, value)
+  --log:info("setting Wireless property: " .. property .. " -> " .. value)
+  log:info(property)
+  log:info(value)
+  log:info(self:getBssid())
+  self:setWirelessProperty(self:getBssid(), property, value)
+  
+end
+
+function Devices.Wireless:getWirelessNetworkProperty(property)
+    return self:getWirelessProperty(self:getBssid(), property)
+end
+
+function Devices.Wireless.isEncrypted() 
+    local encrypted = self:getWirelessProperty(self:getBssid(),"encryption")
+    if (encrypted) then
+        return true
+
+    else
+        return false
+    end
+        
+
 end
 
 
