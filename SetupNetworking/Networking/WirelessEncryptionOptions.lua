@@ -18,7 +18,7 @@
     --]]
 
 
-local ipairs, pairs, print, type, setmetatable, table, _G, _assert, getmetatable,tostring, require = ipairs, pairs, print, type, setmetatable, table, _G , assert,  getmetatable,tostring, require
+local ipairs, pairs, print, type, setmetatable,  _G, _assert, getmetatable,tostring, require = ipairs, pairs, print, type, setmetatable, _G , assert,  getmetatable,tostring, require
 
 local oo			= require("loop.simple")
 local SimpleMenu 		= require("jive.ui.SimpleMenu")
@@ -29,6 +29,7 @@ local log		= require("jive.utils.log").logger("squeezeplay.applets.SetupNetworki
 local EVENT_WINDOW_POP  = jive.ui.EVENT_WINDOW_POP
 local EVENT_CONSUME  = jive.ui.EVENT_CONSUME
 
+local table = require("jive.utils.table")
 
 --used to redraw window everytime its shown
 local EVENT_WINDOW_ACTIVE     = jive.ui.EVENT_WINDOW_ACTIVE
@@ -64,7 +65,7 @@ end
 function EncryptionType:getEncryptionTypes()
     encTypes = {}
     encTypes.none = "None"
-    for i,j in pairs(WirelessEncryption.getEncTypes()) do
+    for i,j in table.pairsByKeys(WirelessEncryption.getEncTypes()) do
     encTypes[i]= j.human_name
     end
     --encTypes.wpa = "WPA passphrase"
@@ -75,13 +76,15 @@ end
 function EncryptionType:configureMenu()
   
   local menu = SimpleMenu("menu")
+  local weight = 10;
   
+  menu:setComparator(SimpleMenu.itemComparatorWeightAlpha)  
     
   encryptionTypes = self:getEncryptionTypes()
   
   log:info("adding enc types: ")
 
-  for i,j in pairs(encryptionTypes) do
+  for i,j in table.pairsByKeys(encryptionTypes) do
     log:info(i .. " -> " .. j)
     local menuItem = { text = j, style = 'item_choice', 
       check =  Choice(
@@ -99,7 +102,13 @@ function EncryptionType:configureMenu()
       ),
       
     }
-    
+
+    if (i == "none") then
+        menuItem.weight = 0;
+    else
+        menuItem.weight = weight;
+        weight = weight + 10;
+    end
     menu:addItem(menuItem)
     
   end

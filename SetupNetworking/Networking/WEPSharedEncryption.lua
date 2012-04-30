@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     --]]
 
--- for /etc/wicd/encryption/templates/wpa
+-- for /etc/wicd/encryption/templates/wep-shared
 
 local ipairs, pairs, print, type, setmetatable, table, _G, assert, getmetatable,tostring, require = ipairs, pairs, print, type, setmetatable, table, _G , assert,  getmetatable,tostring, require
 
@@ -26,17 +26,17 @@ local log		= require("jive.utils.log").logger("squeezeplay.applets.SetupNetworki
 
 
 local WirelessEncryption = require("Networking.WirelessEncryption")
-local WPAEncryption = oo.class({},WirelessEncryption)
+local WEPShared = oo.class({},WirelessEncryption)
 
-WPAEncryption.HUMAN_NAME = "WPA 1/2"
-WPAEncryption.WICD_NAME = "wpa"
+WEPShared.HUMAN_NAME = "WEP (pre-shared key)"
+WEPShared.WICD_NAME = "wep-shared"
 
-function WPAEncryption:__init(args)
-    args.name = WPAEncryption.WICD_NAME
+function WEPShared:__init(args)
+    args.name = WEPShared.WICD_NAME
     super = WirelessEncryption(args)
     local obj = oo.rawnew(self,super)
     local device = obj:getDevice()
-    device:setWirelessNetworkProperty("enctype",WPAEncryption.WICD_NAME)
+    device:setWirelessNetworkProperty("enctype",WEPShared.WICD_NAME)
     return obj
 
 end
@@ -62,48 +62,48 @@ end
 -- isReset() returns true 
 --
 -- Should call _clearReset before returning
-function WPAEncryption:_getMapping() 
-    local wpa = {}   
-    if (self.wpa and not self:isReset()) then
-        wpa = self.wpa
+function WEPShared:_getMapping() 
+    local enc = {}   
+    if (self.enc and not self:isReset()) then
+        enc = self.enc
     else
-        wpa.psk= {}
-        wpa.psk.data = {}
-        wpa.psk.data.human = WPAEncryption.HUMAN_NAME .. " key"
-        wpa.psk.data.required = self:isPskRequired()
-        wpa.psk.data.set = WPAEncryption.setPSK
-        wpa.psk.data.reset = WPAEncryption.resetPSK
+        enc.key= {}
+        enc.key.data = {}
+        enc.key.data.human = WEPShared.HUMAN_NAME
+        enc.key.data.required = self:isKeyRequired()
+        enc.key.data.set = WEPShared.setKey
+        enc.key.data.reset = WEPShared.resetKey
     end    
 
     self:_clearReset()
-    self.wpa = wpa
-    return wpa
+    self.enc = enc
+    return enc
 end
 
-function WPAEncryption:setPSK(value)
+function WEPShared:setKey(value)
     local device = self:getDevice()
-    log:info("setting psk :")
+    log:info("setting key :")
     log:info(value)   
     device:setWirelessNetworkProperty("key",value)
 end
 
-function WPAEncryption:resetPSK()
+function WEPShared:resetKey()
     local device = self:getDevice()
-    device:setWirelessNetworkProperty("psk","")
+    device:setWirelessNetworkProperty("key","")
 end
 
-function WPAEncryption:isPskRequired()
+function WEPShared:isKeyRequired()
     local device = self:getDevice()
-    local psk = device:getWirelessNetworkProperty("psk")
-    -- case : already have psk
-    if (psk != nil and psk != "") then
+    local key = device:getWirelessNetworkProperty("key")
+    -- case : already have key
+    if (key != nil and key != "") then
         return false
     end
     --default : request Key
     return true
 end
 
-WirelessEncryption.registerEncType(WPAEncryption.WICD_NAME,{class=WPAEncryption, human_name=WPAEncryption.HUMAN_NAME })
+WirelessEncryption.registerEncType(WEPShared.WICD_NAME,{class=WEPShared, human_name=WEPShared.HUMAN_NAME })
 
-return WPAEncryption
+return WEPShared
 

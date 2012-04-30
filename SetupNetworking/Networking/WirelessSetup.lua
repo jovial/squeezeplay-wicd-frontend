@@ -34,6 +34,7 @@ local ContextMenuWindow      = require("jive.ui.ContextMenuWindow")
 local Textinput              = require("jive.ui.Textinput")
 local log		= require("jive.utils.log").logger("squeezeplay.applets.SetupNetworking")
 local coroutine        = require("coroutine")
+local table = require("jive.utils.table")
 
 local appletManager = appletManager
 local jiveMain      = jiveMain
@@ -60,7 +61,15 @@ Networking.WirelessEncryption = require("Networking.WirelessEncryption")
 
 -- including registers the encryption type (or should)
 Networking.WPAEncryption = require("Networking.WPAEncryption")
+Networking.WPAPreshared = require("Networking.WPAPSKEncryption")
+Networking.WPAPeapEncryption = require("Networking.WPAPeapEncryption")
+Networking.WPA2PeapEncryption = require("Networking.WPA2PeapEncryption")
+Networking.WPA2LeapEncryption = require("Networking.WPA2LeapEncryption")
 Networking.WEPPassphrase = require("Networking.WEPPassphraseEncryption")
+Networking.WEPSharedEncryption = require("Networking.WEPSharedEncryption")
+Networking.WEPHexEncryption = require("Networking.WEPHexEncryption")
+Networking.WEPLeapEncryption = require("Networking.WEPLeapEncryption")
+Networking.PeapEncryption = require("Networking.PeapEncryption")
 
 local WirelessSetup = oo.class()
 
@@ -234,11 +243,11 @@ function WirelessSetup:createMenu()
     
     local connectingPopup = Networking.ConnectingPopup(self.parent,"","",45)
     local encryption = nil
+    self.request_param_count = 0
 
     local function connectCallback(event, info, success, message)
       
       log:info("class: WirelessSetup, function: connect/ConnectCallback")
-      
       connectingPopup:update(info,message)
       
       if message == "done" then
@@ -258,30 +267,54 @@ function WirelessSetup:createMenu()
       
       
     end     
-    
-    function getUserInput(title,set,done, inputRequired)  
-            
-        local function connectRoutine()
-            connectingPopup:show()
-            connectTask= device:connect(connectCallback)
-        end
+ 
+    local function connectRoutine()
+        connectingPopup:show()
+        connectTask= device:connect(connectCallback)
+    end
 
+   
+    local function getUserInput(title,set,done, inputRequired)  
+            
+
+        
+        local done = done
+        local set = set
+        --FIXME: race condition on checking count?
+        local count = self.request_param_count or 0
+        count = count + 1
+    
+        --check on condition count as input requests are shown in reverse order
+        -- when back to 1 we have finished
+        
         local function callback(value)
+            log:info(done)
+            log:info(set)
+            log:info(count)
             --FIXME: why is value a table and not a string?            
             set(tostring(value))
-            if (done) then
+            count = count -1
+            -- if done            
+            if (count == 0) then
                 connectRoutine()
             end           
         end
         
         if (inputRequired) then        
             getInput(title,callback, "", "qwerty")
+        else
+            count = count -1
         end        
         
         --case already got credentials / no encryption
+        -- if (done and notInputRequired)
         if (done and not inputRequired) then
+            log:info("no input required")
             connectRoutine()
-        end        
+        end
+        
+        log:info(count)
+        self.request_param_count = count;        
 
     end
     
@@ -297,8 +330,11 @@ function WirelessSetup:createMenu()
         --encryption:reset()
         while (encryption:isInputRequired(getUserInput)) do
             -- empty
+            log:info("checked one field")
         end
-        
+    else
+        log:info("connecting with no encryption")
+        connectRoutine()    
     end
 
    

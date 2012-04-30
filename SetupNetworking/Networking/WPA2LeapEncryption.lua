@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     --]]
 
--- for /etc/wicd/encryption/templates/wpa
+-- for /etc/wicd/encryption/templates/wpa2-leap
 
 local ipairs, pairs, print, type, setmetatable, table, _G, assert, getmetatable,tostring, require = ipairs, pairs, print, type, setmetatable, table, _G , assert,  getmetatable,tostring, require
 
@@ -26,17 +26,17 @@ local log		= require("jive.utils.log").logger("squeezeplay.applets.SetupNetworki
 
 
 local WirelessEncryption = require("Networking.WirelessEncryption")
-local WPAEncryption = oo.class({},WirelessEncryption)
+local WPA2LeapEncryption = oo.class({},WirelessEncryption)
 
-WPAEncryption.HUMAN_NAME = "WPA 1/2"
-WPAEncryption.WICD_NAME = "wpa"
+WPA2LeapEncryption.HUMAN_NAME = "WPA2 leap"
+WPA2LeapEncryption.WICD_NAME = "wpa2-leap"
 
-function WPAEncryption:__init(args)
-    args.name = WPAEncryption.WICD_NAME
+function WPA2LeapEncryption:__init(args)
+    args.name = WPA2LeapEncryption.WICD_NAME
     super = WirelessEncryption(args)
     local obj = oo.rawnew(self,super)
     local device = obj:getDevice()
-    device:setWirelessNetworkProperty("enctype",WPAEncryption.WICD_NAME)
+    device:setWirelessNetworkProperty("enctype",WPA2LeapEncryption.WICD_NAME)
     return obj
 
 end
@@ -62,17 +62,26 @@ end
 -- isReset() returns true 
 --
 -- Should call _clearReset before returning
-function WPAEncryption:_getMapping() 
+function WPA2LeapEncryption:_getMapping() 
     local wpa = {}   
     if (self.wpa and not self:isReset()) then
         wpa = self.wpa
     else
-        wpa.psk= {}
-        wpa.psk.data = {}
-        wpa.psk.data.human = WPAEncryption.HUMAN_NAME .. " key"
-        wpa.psk.data.required = self:isPskRequired()
-        wpa.psk.data.set = WPAEncryption.setPSK
-        wpa.psk.data.reset = WPAEncryption.resetPSK
+        wpa.username= {}
+        wpa.username.data = {}
+        wpa.username.data.human = "Username"
+        wpa.username.data.required = self:isUsernameRequired()
+        wpa.username.data.set = WPA2LeapEncryption.setUsername
+        wpa.username.data.reset = WPA2LeapEncryption.resetUsername
+        
+        wpa.password= {}
+        wpa.password.data = {}
+        wpa.password.data.human = "Password"
+        wpa.password.data.required = self:isPasswordRequired()
+        wpa.password.data.set = WPA2LeapEncryption.setPassword
+        wpa.password.data.reset = WPA2LeapEncryption.resetPassword
+               
+        
     end    
 
     self:_clearReset()
@@ -80,30 +89,54 @@ function WPAEncryption:_getMapping()
     return wpa
 end
 
-function WPAEncryption:setPSK(value)
+function WPA2LeapEncryption:setUsername(value)
     local device = self:getDevice()
-    log:info("setting psk :")
+    log:info("setting username :")
     log:info(value)   
-    device:setWirelessNetworkProperty("key",value)
+    device:setWirelessNetworkProperty("username",value)
 end
 
-function WPAEncryption:resetPSK()
+function WPA2LeapEncryption:resetUsername()
     local device = self:getDevice()
-    device:setWirelessNetworkProperty("psk","")
+    device:setWirelessNetworkProperty("username","")
 end
 
-function WPAEncryption:isPskRequired()
+function WPA2LeapEncryption:isUsernameRequired()
     local device = self:getDevice()
-    local psk = device:getWirelessNetworkProperty("psk")
-    -- case : already have psk
-    if (psk != nil and psk != "") then
+    local username = device:getWirelessNetworkProperty("username")
+    -- case : already have username
+    if (username != nil and username != "") then
         return false
     end
     --default : request Key
     return true
 end
 
-WirelessEncryption.registerEncType(WPAEncryption.WICD_NAME,{class=WPAEncryption, human_name=WPAEncryption.HUMAN_NAME })
+function WPA2LeapEncryption:setPassword(value)
+    local device = self:getDevice()
+    log:info("setting password :")
+    log:info(value)   
+    device:setWirelessNetworkProperty("password",value)
+end
 
-return WPAEncryption
+function WPA2LeapEncryption:resetPassword()
+    local device = self:getDevice()
+    device:setWirelessNetworkProperty("password","")
+end
+
+function WPA2LeapEncryption:isPasswordRequired()
+    local device = self:getDevice()
+    local password = device:getWirelessNetworkProperty("password")
+    -- case : already have password
+    if (password != nil and password != "") then
+        return false
+    end
+    --default : request Key
+    return true
+end
+
+
+WirelessEncryption.registerEncType(WPA2LeapEncryption.WICD_NAME,{class=WPA2LeapEncryption, human_name=WPA2LeapEncryption.HUMAN_NAME })
+
+return WPA2LeapEncryption
 

@@ -63,7 +63,7 @@ function WirelessEncryption:isInputRequired(getInput)
                     self.device:setWirelessNetworkProperty(key,raw)
                 end
             end
-            
+            log:info(done)
             getInput(mapping[key].data.human,func,done,true)
             self.lastKey = key
             if (done) then
@@ -74,9 +74,14 @@ function WirelessEncryption:isInputRequired(getInput)
             
         end
     -- no input required
-    getInput(nil,nil,true)
+    getInput(nil,nil,done)
+    self.lastKey = key
 
-    return false
+    if (done) then
+        return false
+    else
+        return true
+    end
        
 end
 
