@@ -59,14 +59,10 @@ function defaultSettings(meta)
   
 end
 
-
-
 function registerApplet(meta)
-  
+    
+  meta:registerService("isNetworkConnected")
+  meta:registerService("showNetworkSetup")  
   jiveMain:addItem(meta:menuItem('appletSetupNetworking', 'settings', "SETUP_NETWORKING", function(applet, ...) applet:menu(...) end, 900))
   
 end
-
-
-
-

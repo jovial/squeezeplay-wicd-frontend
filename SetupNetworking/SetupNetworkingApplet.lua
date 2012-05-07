@@ -138,6 +138,14 @@ Networking.ConnectingPopup = require("Networking.ConnectingPopup")
 Networking.WirelessScanResults = require ("Networking.WirelessScanResults")
 Networking.ConnectionStatus = require ("Networking.ConnectionStatus")
 
+-- return codes wicd.daemon.getConnectionStatus
+local STATUS_NOT_CONNECTED = 0
+local STATUS_CONNECTING = 1 
+local STATUS_CONNECTED_WIRELESS = 2
+local STATUS_CONNECTED_WIRED = 3
+local STATUS_SUSPENDED = 4
+
+
 -- populates Devices with deviceIDs and returns a reference
 
 function searchForNetworkDevices(self)
@@ -375,30 +383,30 @@ local function addGlobalOptions(self, menu)
   
   options = {}
   
-  
+ 
   local function convertStatusCode(status, info)
     
-    if status == 0 then
+    if status == STATUS_NOT_CONNECTED then
       return "Not Connected"
       
     end
     
-    if status ==1 then
+    if status == STATUS_CONNECTING then
       local message = "Connecting to: "
       message = message .. tostring(info[1])
       return message
       
     end
     
-    if status ==2 then
+    if status == STATUS_CONNECTED_WIRELESS then
       return "Connected to wireless"
     end
     
-    if status ==3 then
+    if status == STATUS_CONNECTED_WIRED then
       return "Connected to wired"
     end
     
-    if status ==4 then
+    if status == STATUS_SUSPENDED then
       return "Suspended"
     end
     
@@ -779,6 +787,22 @@ function generateDevicesCM(self,event, item, device, window)
   
 end
 
+
+--service handler
+function isNetworkConnected(self,...)
+     local status, info = Devices.Networking:getConnectionStatus()       
+     if (status == STATUS_CONNECTED_WIRED or status == STATUS_CONNECTED_WIRELESS) then
+        return true   
+     end
+    return false
+end
+
+--service handler
+function showNetworkSetup(self,...)
+    local title = {}
+    title.text = self:string("SETUP_NETWORKING")    
+    menu(self,title)    
+end
 
 
 
