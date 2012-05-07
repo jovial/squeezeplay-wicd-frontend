@@ -479,8 +479,41 @@ local function addGlobalOptions(self, menu)
   Networking.Option(title, options, callbackFunction, statusFunction, globalOptions)
   
   
+  addNetworkOptionsToMenu(menu,globalOptions)
   
-  for i,j in ipairs(globalOptions) do
+  
+end
+
+--
+
+function createDeviceConfigMenu(self,continueClosure)
+  
+  local menu = SimpleMenu("menu")
+  
+  -- add network devices
+  
+  local devices =  self:searchForNetworkDevices() 
+  
+  addNetworkDevicesToMenu(self,menu, devices)
+  
+  -- add global options
+  
+  addGlobalOptions(self,menu)
+
+  -- continue button if we have closure
+  if continueClosure and type(continueClosure) == "function" then
+    log:debug("adding continue")
+    addContinueOption(menu, continueClosure)
+  end
+  
+  return menu
+  
+end
+
+
+function addNetworkOptionsToMenu(menu, options)
+  
+  for i,j in ipairs(options) do
     
     local menuItem = { text = j.title, style = 'item_choice', 
       check =  Choice(
@@ -495,49 +528,43 @@ local function addGlobalOptions(self, menu)
     menu:addItem(menuItem)
     
   end
-  
-  
-  
-  
-  
-  
-end
 
---
-
-function createDeviceConfigMenu(self)
-  
-  local menu = SimpleMenu("menu")
-  
-  -- add network devices
-  
-  local devices =  self:searchForNetworkDevices() 
-  
-  addNetworkDevicesToMenu(self,menu, devices)
-  
-  -- add global options
-  
-  addGlobalOptions(self,menu)
-  
-  return menu
-  
 end
 
 
+function addContinueOption(menu,closure)
 
-function menu(self, menuItem)
+  local continueOptions = {}
+  
+  local title = "Continue"  
+  
+  local options = {}
+  
+  local function callbackFunction(choiceObject, selectedIndex)
+    closure()   
+  end
+  
+  
+  Networking.Option(title, options, callbackFunction, nil, continueOptions)
+  
+  addNetworkOptionsToMenu(menu, continueOptions) 
+
+
+end
+
+-- set continueClosure to add a continueButton
+function menu(self, menuItem, continueClosure)
   
   log:info("SetupNetworkingApplet: starting")
   
   
   -- creates a new style, called "section_title", as defined in Networking/Utilities.lua
   Networking.Utilities:createSectionTitleStyle()
+    
   
-  
-  
-  local menu = self:createDeviceConfigMenu()
-  
-  
+  local menu = self:createDeviceConfigMenu(continueClosure)
+
+ 
   --  create window and set title to name from previous menu
   local window = Window("icon_list", menuItem.text)
   
@@ -551,7 +578,7 @@ function menu(self, menuItem)
       -- redraw
       log:info("redrawing main window")
       window:removeWidget(menu)
-      menu = self:createDeviceConfigMenu()
+      menu = self:createDeviceConfigMenu(continueClosure)
       window:addWidget(menu)
       
   end)
@@ -640,11 +667,6 @@ function generateDevicesCM(self,event, item, device, window)
   
   
   lua_table.insert(wiredEnabled, menuItem)
-  
-  
-  
-  
-  
   
   
   local menuItem = { text = "Disable" ,
@@ -798,10 +820,11 @@ function isNetworkConnected(self,...)
 end
 
 --service handler
-function showNetworkSetup(self,...)
+function showNetworkSetup(self,closure)
     local title = {}
     title.text = self:string("SETUP_NETWORKING")    
-    menu(self,title)    
+    local rtn = menu(self,title, closure)
+    return rtn    
 end
 
 
