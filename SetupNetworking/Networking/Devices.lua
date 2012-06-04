@@ -559,6 +559,7 @@ function Devices.Wireless:setWirelessProperty(bssid,property,value)
   log:info(property)
   log:info(value)
   wicd.daemon.wireless.SetWirelessProperty(networkID,property,value)
+  wicd.daemon.wireless.SaveWirelessNetworkProfile(networkID)
   
 end
 

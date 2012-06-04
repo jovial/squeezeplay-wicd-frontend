@@ -215,6 +215,44 @@ function WirelessSetup:createMenu()
   
   Networking.Option(title, options, callbackFunction, statusFunction, optionsList)
 
+  --- Auto reconnect toggle
+  options = {}
+
+  title = "Auto-reconnect"
+  
+  options = {"Enabled","Disabled"}
+    
+  
+  local function callbackFunction(choiceObject, selectedIndex)
+    
+    if choiceObject:getSelected() == "Enabled" then
+      self:getDevice():setWirelessNetworkProperty("automatic", "True")
+      return
+    end
+    
+    self:getDevice():setWirelessNetworkProperty("automatic", "False")
+    
+  end
+  
+  device = self:getDevice()
+  
+  local function statusFunction(self) 
+    log:debug(device:getWirelessNetworkProperty("automatic"))
+    if device:getWirelessNetworkProperty("automatic") == true then
+      
+      return self.options[1] -- "Enabled"
+      --return "Enabled"
+    end
+    
+    return self.options[2] --"Disabled"
+    --return "Disabled"
+    
+  end
+  
+  Networking.Option(title, options, callbackFunction, statusFunction, optionsList)    
+
+  -- end Auto reconnect toggle
+
   --TODO: convert to utility function
 
   for i,j in ipairs(optionsList) do
