@@ -15,7 +15,7 @@
 interface_xml := common/wicd-dbus-interface.xml
 
 # Define a list of pkg-config packages we want to use
-pkg_packages := dbus-1 dbus-glib-1 python lua5.1
+pkg_packages := dbus-1 dbus-glib-1 lua5.1
 
 PKG_CFLAGS  := $(shell pkg-config --cflags $(pkg_packages))
 PKG_LDFLAGS := $(shell pkg-config --libs $(pkg_packages))
