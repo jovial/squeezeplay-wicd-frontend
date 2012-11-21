@@ -18,7 +18,7 @@
     --]]
 
 
-local ipairs, pairs, print, type, setmetatable, lua_table, _G, _assert, getmetatable, require = ipairs, pairs, print, type, setmetatable, table, _G , assert,  getmetatable, require
+local ipairs, pairs, print, type, setmetatable, lua_table, _G, _assert, getmetatable, require, pcall = ipairs, pairs, print, type, setmetatable, table, _G , assert,  getmetatable, require, pcall
 
 local log		= require("jive.utils.log").logger("squeezeplay.applets.SetupNetworking")
 local Task		= require("jive.ui.Task")
@@ -265,11 +265,17 @@ end
 function Devices.Wired:populate()
   
   -- reset DeviceList and repopulate
-  
-  
+    
   Devices.Wired.list = {}
-  
-  deviceList = wicd.daemon.wired.GetWiredInterfaces()
+  local deviceList = {}
+ 
+  -- python throws exception when trying to marshall empty list as string array as it cannot detect
+  -- the type
+  if pcall(function() deviceList = wicd.daemon.wired.GetWiredInterfaces() end) then
+    -- do nothing
+  else
+    deviceList = {}
+  end
   
   for i,j in pairs(deviceList) do
     
@@ -298,13 +304,22 @@ function Devices.Wireless.disable()
 end
 
 function Devices.Wireless:populate()
+
+  log:debug("entering Devices.Wireless:populate")
   
   Devices.Wireless.list = {}
   
   local deviceList
   
-  
-  deviceList = wicd.daemon.wireless.GetWirelessInterfaces()
+  -- python throws exception when trying to marshall empty list as string array as it cannot detect
+  -- the type
+  if pcall(function() deviceList = wicd.daemon.wireless.GetWirelessInterfaces() end) then
+    -- do nothing
+  else
+    deviceList = {}
+  end
+
+  log:debug("retrieved wireless interfaces")
   
   for i,j in pairs(deviceList) do
     

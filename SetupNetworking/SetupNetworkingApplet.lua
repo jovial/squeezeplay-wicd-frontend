@@ -149,10 +149,12 @@ local STATUS_SUSPENDED = 4
 -- populates Devices with deviceIDs and returns a reference
 
 function searchForNetworkDevices(self)
-  
+  log:debug('enter: searchForNetworkDevices')  
+
   Devices.Wireless:populate()
   Devices.Wired:populate()
   
+  log:debug('return: searchForNetworkDevices')  
   return Devices
   
 end
@@ -206,19 +208,22 @@ local function addNetworkDevicesToMenu(self, menu, devices)
   
   
   for x,y in pairs(deviceList) do
-    
-    
-    local menuItem = { text = getSectionTitle(y), style = 'section_title', 
-      check =  Choice(
-        "section_title.choice",  -- style
-        {"Enabled"}, 
-        function(self) --callback
+
+    -- if device list empty, do not add section title 
+    if(lua_table.getn(x.list) > 0) then
+
+      local menuItem = { text = getSectionTitle(y), style = 'section_title', 
+        check =  Choice(
+          "section_title.choice",  -- style
+          {"Enabled"}, 
+          function(self) --callback
+            
+          end
           
-        end
-        
-    )}
-    
-    menu:addItem(menuItem)
+      )}
+      
+      menu:addItem(menuItem)
+    end
     
     for i,v in ipairs(x.list) do
       
@@ -560,10 +565,12 @@ function menu(self, menuItem, continueClosure)
   
   -- creates a new style, called "section_title", as defined in Networking/Utilities.lua
   Networking.Utilities:createSectionTitleStyle()
-    
-  
-  local menu = self:createDeviceConfigMenu(continueClosure)
 
+  log:debug('created section title style') 
+      
+  local menu = self:createDeviceConfigMenu(continueClosure)
+  
+  log:debug('created device config menu') 
  
   --  create window and set title to name from previous menu
   local window = Window("icon_list", menuItem.text)
