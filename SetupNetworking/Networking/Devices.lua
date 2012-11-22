@@ -274,6 +274,7 @@ function Devices.Wired:populate()
   if pcall(function() deviceList = wicd.daemon.wired.GetWiredInterfaces() end) then
     -- do nothing
   else
+    log:warn("dbus method call: GetWiredInterfaces() failed, assuming device list empty")
     deviceList = {}
   end
   
@@ -316,6 +317,7 @@ function Devices.Wireless:populate()
   if pcall(function() deviceList = wicd.daemon.wireless.GetWirelessInterfaces() end) then
     -- do nothing
   else
+    log:warn("dbus method call: GetWirelessInterfaces() failed, assuming device list empty")
     deviceList = {}
   end
 
